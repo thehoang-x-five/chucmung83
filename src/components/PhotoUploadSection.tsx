@@ -1,51 +1,40 @@
-import { useState, useRef, useCallback } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
-import { Upload, Camera } from "lucide-react";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Upload, Camera, X, Plus } from "lucide-react";
 import floralFrame from "@/assets/floral-frame.png";
 
 const PhotoUploadSection = () => {
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (ev) => setPhoto(ev.target?.result as string);
+      reader.onload = (ev) => {
+        setPhotos((prev) => [...prev, ev.target?.result as string]);
+      };
       reader.readAsDataURL(file);
-    }
+    });
+    // Reset input so same file can be selected again
+    e.target.value = "";
   };
 
-  // 3D tilt effect
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotateX = useTransform(y, [-100, 100], [8, -8]);
-  const rotateY = useTransform(x, [-100, 100], [-8, 8]);
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      x.set(e.clientX - rect.left - rect.width / 2);
-      y.set(e.clientY - rect.top - rect.height / 2);
-    },
-    [x, y]
-  );
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
     <section id="photo-section" className="py-24 md:py-32 px-6">
-      <div className="max-w-4xl mx-auto text-center">
+      <div className="max-w-5xl mx-auto text-center">
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           className="font-body text-sm tracking-[0.25em] uppercase text-muted-foreground mb-4"
         >
-          Khoảnh khắc của bạn
+          Khoảnh khắc của các bạn
         </motion.p>
 
         <motion.h2
@@ -53,84 +42,111 @@ const PhotoUploadSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="font-display text-3xl md:text-5xl font-semibold text-foreground mb-12"
+          className="font-display text-3xl md:text-5xl font-semibold text-foreground mb-4"
         >
-          Nụ cười <span className="text-gradient-rose italic">rạng rỡ</span> nhất
+          Những nụ cười <span className="text-gradient-rose italic">rạng rỡ</span>
         </motion.h2>
 
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="relative max-w-md mx-auto"
-          style={{ perspective: 1000 }}
+          transition={{ delay: 0.2 }}
+          className="font-body text-muted-foreground mb-12 text-sm"
         >
-          <motion.div
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{ rotateX, rotateY }}
-            transition={{ type: "spring", stiffness: 200, damping: 30 }}
-            className="relative"
-          >
-            {/* Floral frame overlay */}
-            <div className="relative polaroid-frame mx-auto">
-              {photo ? (
-                <div className="relative aspect-square overflow-hidden rounded-sm">
-                  <img
-                    src={photo}
-                    alt="Your beautiful photo"
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Floral frame overlay */}
-                  <img
-                    src={floralFrame}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                    style={{ mixBlendMode: "multiply", opacity: 0.7 }}
-                  />
-                </div>
-              ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="aspect-square bg-secondary/50 rounded-sm flex flex-col items-center justify-center cursor-pointer hover:bg-secondary transition-colors duration-300 group"
-                >
-                  <div className="w-20 h-20 rounded-full bg-soft-pink/50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Camera className="w-8 h-8 text-primary" />
-                  </div>
-                  <p className="font-body text-muted-foreground text-sm">
-                    Bấm để chọn ảnh
-                  </p>
-                </div>
-              )}
+          Tải lên những bức ảnh xinh đẹp nhất của các bạn nữ trong lớp 💐
+        </motion.p>
 
-              {/* Polaroid caption */}
-              <p className="font-display text-center text-muted-foreground text-sm italic mt-3">
-                {photo ? "Bạn thật xinh đẹp! 💐" : "Tải lên bức ảnh rạng rỡ nhất"}
+        {/* Photo Gallery Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+          <AnimatePresence mode="popLayout">
+            {photos.map((photo, index) => (
+              <motion.div
+                key={photo.slice(-20) + index}
+                initial={{ opacity: 0, scale: 0.8, rotateZ: -5 }}
+                animate={{ opacity: 1, scale: 1, rotateZ: 0 }}
+                exit={{ opacity: 0, scale: 0.5, rotateZ: 10 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                whileHover={{ y: -8, rotateZ: Math.random() > 0.5 ? 2 : -2 }}
+                className="relative group"
+              >
+                <div className="polaroid-frame">
+                  <div className="relative aspect-square overflow-hidden rounded-sm">
+                    <img
+                      src={photo}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {/* Floral frame overlay */}
+                    <img
+                      src={floralFrame}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-50"
+                      style={{ mixBlendMode: "multiply" }}
+                    />
+                  </div>
+                  <p className="font-display text-center text-muted-foreground text-xs italic mt-2">
+                    Xinh đẹp quá! ✨
+                  </p>
+
+                  {/* Remove button */}
+                  <button
+                    onClick={() => removePhoto(index)}
+                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-foreground/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  >
+                    <X className="w-3 h-3 text-background" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {/* Add more photos card */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            onClick={() => fileInputRef.current?.click()}
+            className="cursor-pointer group"
+          >
+            <div className="polaroid-frame h-full">
+              <div className="aspect-square bg-secondary/50 rounded-sm flex flex-col items-center justify-center group-hover:bg-secondary transition-colors duration-300">
+                {photos.length === 0 ? (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-soft-pink/50 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                      <Camera className="w-7 h-7 text-primary" />
+                    </div>
+                    <p className="font-body text-muted-foreground text-xs px-2">
+                      Bấm để chọn ảnh
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-soft-pink/50 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+                      <Plus className="w-5 h-5 text-primary" />
+                    </div>
+                    <p className="font-body text-muted-foreground text-xs">
+                      Thêm ảnh
+                    </p>
+                  </>
+                )}
+              </div>
+              <p className="font-display text-center text-muted-foreground text-xs italic mt-2">
+                {photos.length === 0 ? "Tải ảnh lên đây" : `${photos.length} ảnh`}
               </p>
             </div>
-
-            {photo && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-6 font-body text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
-              >
-                Chọn ảnh khác
-              </motion.button>
-            )}
           </motion.div>
-        </motion.div>
+        </div>
 
-        {!photo && (
+        {photos.length === 0 && (
           <motion.button
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.5 }}
             onClick={() => fileInputRef.current?.click()}
-            className="mt-8 inline-flex items-center gap-2 gradient-rose-gold text-primary-foreground font-body text-sm tracking-wider px-8 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+            className="inline-flex items-center gap-2 gradient-rose-gold text-primary-foreground font-body text-sm tracking-wider px-8 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
           >
             <Upload className="w-4 h-4" />
             Tải ảnh lên
@@ -141,6 +157,7 @@ const PhotoUploadSection = () => {
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           onChange={handleFileChange}
           className="hidden"
         />
