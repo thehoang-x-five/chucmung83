@@ -11,9 +11,7 @@ const HeroSection = () => {
         style={{ backgroundImage: `url(${heroBg})` }}
       />
       {/* Overlay */}
-      <div className="absolute inset-0 gradient-hero opacity-60" />
-
-      <FloatingParticles />
+      <div className="absolute inset-0 gradient-hero opacity-40 mix-blend-overlay" />
 
       <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
         <motion.p
