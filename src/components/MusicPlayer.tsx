@@ -6,23 +6,60 @@ const MusicPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleCanPlay = () => console.log("Audio is ready to play!");
+    const handleError = (e: any) => {
+      console.error("Audio Load Error:", e);
+      const error = audio.error;
+      if (error) {
+        console.error("Audio specific error:", {
+          code: error.code,
+          message: error.message,
+        });
+      }
+    };
+
+    audio.addEventListener("canplaythrough", handleCanPlay);
+    audio.addEventListener("error", handleError);
+
+    return () => {
+      audio.removeEventListener("canplaythrough", handleCanPlay);
+      audio.removeEventListener("error", handleError);
+    };
+  }, []);
+
   const togglePlay = () => {
     if (audioRef.current) {
       if (isPlaying) {
+        console.log("Pausing audio...");
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play().catch((err) => {
-          console.error("Audio playback failed:", err);
-          // Auto-play might be blocked by browser
-        });
+        console.log("Starting audio playback...");
+        // Reset to start if it ended or wasn't loaded
+        if (audioRef.current.readyState === 0) {
+          audioRef.current.load();
+        }
+        
+        audioRef.current.play()
+          .then(() => {
+            console.log("Playback started successfully!");
+            setIsPlaying(true);
+          })
+          .catch((err) => {
+            console.error("Audio playback blocked/failed:", err);
+            // Auto-play might be blocked by browser or source missing
+          });
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
   return (
     <div className="fixed bottom-8 left-8 z-50">
-      <audio ref={audioRef} loop src="/Vạn Sự Như Ý - Nhạc Tết Trend.mp3" />
+      <audio ref={audioRef} loop src="/nhac.mp3" />
 
       <motion.button
         onClick={togglePlay}
