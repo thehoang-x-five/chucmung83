@@ -1,52 +1,18 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Gift, Heart, Sparkles, Volume2, VolumeX } from "lucide-react";
-
-// Free lofi music from a public CDN
-const MUSIC_URL = "https://cdn.pixabay.com/audio/2024/11/01/audio_38fce20964.mp3";
+import { Gift, Heart, Sparkles } from "lucide-react";
 
 const WishesSection = () => {
   const [gifted, setGifted] = useState(false);
-  const [musicPlaying, setMusicPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    const audio = new Audio(MUSIC_URL);
-    audio.loop = true;
-    audio.volume = 0.3;
-    audioRef.current = audio;
-    return () => {
-      audio.pause();
-      audio.src = "";
-    };
-  }, []);
-
-  const toggleMusic = () => {
-    if (!audioRef.current) return;
-    if (musicPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(() => {});
-    }
-    setMusicPlaying(!musicPlaying);
-  };
 
   const fireConfetti = () => {
     if (gifted) return;
     setGifted(true);
 
-    // Auto-play music on gift
-    if (!musicPlaying && audioRef.current) {
-      audioRef.current.play().catch(() => {});
-      setMusicPlaying(true);
-    }
-
     const colors = ["#d4918c", "#e6b4aa", "#c8aa78", "#f5d5cf", "#ffeaa7", "#ff9ff3"];
-
-    // Multi-burst confetti
     const fire = (opts: confetti.Options) => confetti({ ...opts, colors });
-    
+
     fire({ particleCount: 80, spread: 70, origin: { x: 0.15, y: 0.6 } });
     fire({ particleCount: 80, spread: 70, origin: { x: 0.85, y: 0.6 } });
 
@@ -59,7 +25,6 @@ const WishesSection = () => {
       fire({ particleCount: 60, spread: 120, origin: { x: 0.7, y: 0.5 }, startVelocity: 45 });
     }, 600);
 
-    // Hearts burst
     setTimeout(() => {
       confetti({
         particleCount: 30,
@@ -80,19 +45,6 @@ const WishesSection = () => {
 
   return (
     <section className="relative py-24 md:py-32 px-6 bg-secondary/30">
-      {/* Music toggle button - fixed */}
-      <button
-        onClick={toggleMusic}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full glass-card flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300"
-        aria-label={musicPlaying ? "Tắt nhạc" : "Bật nhạc"}
-      >
-        {musicPlaying ? (
-          <Volume2 className="w-5 h-5 text-primary animate-pulse" />
-        ) : (
-          <VolumeX className="w-5 h-5 text-muted-foreground" />
-        )}
-      </button>
-
       <div className="max-w-3xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -169,17 +121,6 @@ const WishesSection = () => {
               </>
             )}
           </button>
-
-          {gifted && (
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="mt-4 font-body text-sm text-muted-foreground"
-            >
-              🎵 Bật nhạc để tận hưởng khoảnh khắc đặc biệt nhé!
-            </motion.p>
-          )}
         </motion.div>
 
         {/* Footer */}
